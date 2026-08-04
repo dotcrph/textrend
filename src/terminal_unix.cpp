@@ -218,12 +218,6 @@ namespace terminal {
         }
     }
 
-    void printLiteral(const char *string)
-    {
-        size_t size = strlen(string);
-        print(string, size);
-    }
-
     void printBuffer(char *buffer, const Vec2s &dimensions)
     {
         printLiteral("\x1b[H");
