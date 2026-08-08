@@ -115,8 +115,26 @@ namespace terminal {
 
     void update()
     {
-        readInput();
         windowsResized = false;
+
+        // Read input from stdin
+        memset(keys, 0, sizeof(keys));
+
+        // FIXME: Google says that using poll 
+        // with /dev/tty on Mac is unreliable
+        int result = poll(&inputPollFD, 1, 0);
+
+        // Ignoring errors
+        if (result == -1)
+            return;
+
+        // Timeout
+        if (result == 0)
+            return;
+
+        // Reading stdin if there is data to read
+        if (inputPollFD.revents & POLLIN)
+            read(inputFD, &keys, sizeof(keys));
     }
 
     void cleanup()
@@ -141,27 +159,6 @@ namespace terminal {
     }
 
 // IO
-
-    void readInput()
-    {
-        memset(keys, 0, sizeof(keys));
-
-        // FIXME: Google says that using poll 
-        // with /dev/tty on Mac is unreliable
-        int result = poll(&inputPollFD, 1, 0);
-
-        // Ignoring errors
-        if (result == -1)
-            return;
-
-        // Timeout
-        if (result == 0)
-            return;
-
-        // Reading stdin if there is data to read
-        if (inputPollFD.revents & POLLIN)
-            read(inputFD, &keys, sizeof(keys));
-    }
 
     bool pollKey(char key)
     {
