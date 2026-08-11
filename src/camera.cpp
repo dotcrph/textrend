@@ -59,71 +59,71 @@ void Camera::update(double deltaTime)
     Vec3f left    = rotation.rotate(Vec3f::left())    * movementFactor;
     Vec3f up      = rotation.rotate(Vec3f::up())      * movementFactor;
 
-    if (terminal::pollKey('w'))
+    if (terminal::getKeyHeld('w'))
         position += forward;
 
-    if (terminal::pollKey('s'))
+    if (terminal::getKeyHeld('s'))
         position -= forward;
 
-    if (terminal::pollKey('a'))
+    if (terminal::getKeyHeld('a'))
         position += left;
 
-    if (terminal::pollKey('d'))
+    if (terminal::getKeyHeld('d'))
         position -= left;
 
-    if (terminal::pollKey('e'))
+    if (terminal::getKeyHeld('e'))
         position += up;
 
-    if (terminal::pollKey('q'))
+    if (terminal::getKeyHeld('q'))
         position -= up;
 
     // Rotation
     float rotationDelta = rotationSpeed * deltaTime;
     float yFactor       = args::getFlipY() ? 1 : -1;
 
-    if (terminal::pollKey('k') || terminal::pollKey('4'))
+    if (terminal::getKeyHeld('k') || terminal::getKeyHeld('4'))
         rotationEulerY += rotationDelta;
 
-    if (terminal::pollKey(';') || terminal::pollKey('6'))
+    if (terminal::getKeyHeld(';') || terminal::getKeyHeld('6'))
         rotationEulerY -= rotationDelta;
 
-    if (terminal::pollKey('o') || terminal::pollKey('8'))
+    if (terminal::getKeyHeld('o') || terminal::getKeyHeld('8'))
         rotationEulerX += rotationDelta * yFactor;
 
-    if (terminal::pollKey('l') || terminal::pollKey('2'))
+    if (terminal::getKeyHeld('l') || terminal::getKeyHeld('2'))
         rotationEulerX -= rotationDelta * yFactor;
 
     rotation = Quaternion::fromEuler(rotationEulerX, rotationEulerY, 0.0f);
 
     // Fov and speed
-    if (terminal::pollKey('[')) {
+    if (terminal::getKeyDown('[')) {
         if (movementSpeed <= 10.0f)
             movementSpeed = 10.0f;
         else
             movementSpeed -= 10.0f;
     }
 
-    if (terminal::pollKey(']'))
+    if (terminal::getKeyDown(']'))
         movementSpeed += 20.0f;
 
-    if (terminal::pollKey('{')) {
+    if (terminal::getKeyDown('{')) {
         if (rotationSpeed <= 50.0f)
             rotationSpeed = 50.0f;
         else
             rotationSpeed -= 50.0f;
     }
 
-    if (terminal::pollKey('}'))
+    if (terminal::getKeyDown('}'))
         rotationSpeed += 50.0f;
 
-    if (terminal::pollKey('=') || terminal::pollKey('+')) {
+    if (terminal::getKeyDown('=') || terminal::getKeyDown('+')) {
         if (getFov() <= 10.0f)
             setFov(10.0f);
         else
             setFov(getFov() - 1.0f);
     }
 
-    if (terminal::pollKey('-') || terminal::pollKey('_')) {
+    if (terminal::getKeyDown('-') || terminal::getKeyDown('_')) {
         if (getFov() >= 160.0f)
             setFov(160.0f);
         else

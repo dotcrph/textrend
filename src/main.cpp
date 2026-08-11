@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         // resizing flag, so I'm calling it after
         terminal::update();
 
-        if (terminal::pollKey('\x1b'))
+        if (terminal::getKeyHeld('\x1b'))
             running = false;
 
         camera.update(deltaTime);

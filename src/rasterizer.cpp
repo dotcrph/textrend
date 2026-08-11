@@ -24,16 +24,16 @@ namespace rasterizer {
 
     void update()
     {
-        if (terminal::pollKey('z'))
+        if (terminal::getKeyDown('z'))
             drawVerts = !drawVerts;
 
-        if (terminal::pollKey('x'))
+        if (terminal::getKeyDown('x'))
             drawEdges = !drawEdges;
 
-        if (terminal::pollKey('c'))
+        if (terminal::getKeyDown('c'))
             drawFaces = !drawFaces;
 
-        if (terminal::pollKey('b'))
+        if (terminal::getKeyDown('b'))
             backfaceCulling = !backfaceCulling;
     }
 

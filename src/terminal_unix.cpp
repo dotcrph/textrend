@@ -22,10 +22,6 @@
 #include "math.hpp"
 
 namespace terminal {
-    // NOTE: It would be much better to use something like evdev or the 
-    // AppKit stuff to poll keyboard, but it would require splitting this 
-    // file into separate Linux/MacOS implementations. This provides little 
-    // benefit for a lot of effort, so I'm just reading from /dev/tty
     int inputFD              = -1;
     int originalInputFDFlags =  0;
 
@@ -160,6 +156,20 @@ namespace terminal {
 
 // IO
 
+    // NOTE: This is obviously dumb, but doing this properly 
+    // would require splitting this file into separate Linux/MacOS 
+    // implementations. This provides little benefit, and reading 
+    // from /dev/tty is just good enough for my use case.
+    bool getKeyDown(char key)
+    {
+        return pollKey(key);
+    }
+
+    bool getKeyHeld(char key)
+    {
+        return pollKey(key);
+    }
+
     bool pollKey(char key)
     {
         for (int i = 0; i < sizeof(keys); i++)
@@ -169,7 +179,9 @@ namespace terminal {
         return false;
     }
 
-    Vec2s getScreenSize()
+// Screen
+
+    bool getScreenSize(Vec2s &cells, Vec2s &px)
     {
         assert(outputFD != -1);
 
@@ -182,13 +194,31 @@ namespace terminal {
                 errno, strerror(errno)
             );
 
-            return Vec2s::zero();
+            return false;
         }
 
-        return {window.ws_col, window.ws_row};
+        cells = {window.ws_col,    window.ws_row};
+        px    = {window.ws_xpixel, window.ws_ypixel};
+
+        return true;
     }
 
-// Print
+    bool shouldResizeWindow()
+    { 
+        return windowsResized;
+    }
+
+    void sigwinchHandler(int n)
+    {
+        windowsResized = true;
+    }
+
+// Misc
+
+    void resetCursor()
+    {
+        printLiteral("\x1b[H");
+    }
 
     void print(const char *string, size_t bytes)
     {
@@ -213,35 +243,5 @@ namespace terminal {
             rest  += written;
             bytes -= written;
         }
-    }
-
-    void printBuffer(char *buffer, const Vec2s &dimensions)
-    {
-        printLiteral("\x1b[H");
-        print(buffer, dimensions.x);
-
-        for (size_t row = 1; row < dimensions.y; row++) {
-            char *oneBeforeStart = buffer + dimensions.x * (row - 1) 
-                                          + dimensions.x - 1;
-
-            // This is a hack, but I do not want to 
-            // allocate a new string just to insert newlines
-            char originalChar = *oneBeforeStart;
-            *oneBeforeStart = '\n';
-            print(oneBeforeStart, dimensions.x + 1);
-            *oneBeforeStart = originalChar;
-        }
-    }
-
-// Window resizing
-
-    bool shouldResizeWindow()
-    { 
-        return windowsResized;
-    }
-
-    void sigwinchHandler(int n)
-    {
-        windowsResized = true;
     }
 }

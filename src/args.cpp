@@ -19,6 +19,8 @@ namespace args {
     float fontRatio = 0.45f;
     float getFontRatio() { return fontRatio; }
 
+    // TODO: Add a flag to disable auto font size detection for Windows
+
     bool flipY = false;
     bool getFlipY() { return flipY; }
 

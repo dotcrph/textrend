@@ -7,7 +7,6 @@
 #include <cstring>
 #include <cmath>
 
-#include "args.hpp"
 #include "math.hpp"
 #include "terminal.hpp"
 
@@ -25,16 +24,13 @@ namespace screen {
 
     bool initialize()
     {
-        bufferDimensions = terminal::getScreenSize();
+        Vec2s bufferSizePx = Vec2s::zero();
+        bool good = terminal::getScreenSize(bufferDimensions, bufferSizePx);
 
-        if (bufferDimensions == Vec2s::zero())
+        if (!good)
             return false;
 
-        // NOTE: The getFontRatio() factor here is to 
-        // compensate for ASCII characters in the majority 
-        // of monospace fonts not being perfectly square.
-        widthDivHeight = (float)bufferDimensions.x / bufferDimensions.y 
-                       * args::getFontRatio();
+        widthDivHeight = (float)bufferSizePx.x / bufferSizePx.y;
 
         // Allocate buffers
         bufferCount = bufferDimensions.x * bufferDimensions.y;
@@ -62,7 +58,21 @@ namespace screen {
 
     void print()
     {
-        terminal::printBuffer(frameBuffer, bufferDimensions);
+        terminal::resetCursor();
+        terminal::print(frameBuffer, bufferDimensions.x);
+
+        for (size_t row = 1; row < bufferDimensions.y; row++) {
+            char *oneBeforeFirst = frameBuffer 
+                                 + bufferDimensions.x * (row - 1) 
+                                 + bufferDimensions.x - 1;
+
+            // This is a hack, but I do not want to 
+            // allocate a new string just to insert newlines
+            char originalChar = *oneBeforeFirst;
+            *oneBeforeFirst = '\n';
+            terminal::print(oneBeforeFirst, bufferDimensions.x + 1);
+            *oneBeforeFirst = originalChar;
+        }
     }
 
     size_t cellToIndex(Vec2s cell)

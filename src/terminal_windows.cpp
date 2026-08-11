@@ -5,22 +5,30 @@
 #include <cstring>
 
 #include <stdexcept>
-#include <sstream>
 #include <wincontypes.h>
 #include <windows.h>
 
+#include "args.hpp"
 #include "utils.hpp"
 
 namespace terminal {
     HANDLE inHandle  = nullptr;
     DWORD  inOldMode = 0;
 
-    HANDLE outHandle     = nullptr;
-    Vec2s  outDimensions = Vec2s::zero();
+    HANDLE outHandle = nullptr;
 
-    bool windowsResized = false;
+    bool  windowResized = false;
+    COORD bufferCells   = {0, 0};
 
-    static constexpr int charToVKey[128] = {
+    // The state of each key, indexed by its ascii value from KEY_EVENT_RECORD
+    // The state is a bitmask with the following fields:
+    //
+    //     0x80 : The key is currently being held
+    //     0x40 : The key was being held in the previous frame
+    //
+    char keys[256] = {};
+
+    constexpr int charToVKey[128] = {
         // NOTE: 0xFF  is a reserved nop value (VK__none_)
         //       0x100 indicates that Shift must be pressed
 
@@ -87,8 +95,8 @@ namespace terminal {
         /* 0x5B [ */ VK_OEM_4,
         /* 0x5C \ */ VK_OEM_5,
         /* 0x5D ] */ VK_OEM_6,
-        /* 0x5E ^ */ 6             | 0x100,
-        /* 0x5F _ */ VK_OEM_MINUS  | 0x100,
+        /* 0x5E ^ */ 6            | 0x100,
+        /* 0x5F _ */ VK_OEM_MINUS | 0x100,
         /* 0x60 ` */ VK_OEM_3,
 
         // Lowercase letters 0x61-0x7A
@@ -96,10 +104,10 @@ namespace terminal {
         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 
         // Special characters
-        /* 0x7B { */ VK_OEM_4      | 0x100,
-        /* 0x7C | */ VK_OEM_5      | 0x100,
-        /* 0x7D } */ VK_OEM_6      | 0x100,
-        /* 0x7E ~ */ VK_OEM_3      | 0x100,
+        /* 0x7B { */ VK_OEM_4 | 0x100,
+        /* 0x7C | */ VK_OEM_5 | 0x100,
+        /* 0x7D } */ VK_OEM_6 | 0x100,
+        /* 0x7E ~ */ VK_OEM_3 | 0x100,
 
         // Control character
         /* 0x7F */ 0xFF
@@ -162,9 +170,9 @@ namespace terminal {
             return false;
         }
 
-        // Initialize the outDimensions
-        CONSOLE_SCREEN_BUFFER_INFO screenInfo;
-        good = GetConsoleScreenBufferInfo(outHandle, &screenInfo);
+        // Set the screen buffer size
+        CONSOLE_SCREEN_BUFFER_INFO bufferInfo;
+        good = GetConsoleScreenBufferInfo(outHandle, &bufferInfo);
 
         if (!good) {
             logger::error(
@@ -175,10 +183,7 @@ namespace terminal {
             return false;
         }
 
-        outDimensions = {
-            (size_t)screenInfo.dwSize.X, 
-            (size_t)screenInfo.dwSize.Y
-        };
+        bufferCells = bufferInfo.dwSize;
 
         // Hide the cursor
         setCursorVisibility(false);
@@ -188,7 +193,41 @@ namespace terminal {
 
     void update()
     {
-        windowsResized = false;
+        BOOL good;
+
+        windowResized = false;
+
+        // Update keys
+
+        // NOTE: This call causes the GetKeyboardState to actually work. I do 
+        // not know why that is the case. I have found this workaround here:
+        // https://dev.to/mirrai/windows-hooks-are-weird-3cld
+        GetKeyState(0xFF);
+
+        BYTE rawKeys[256] = {};
+
+        // NOTE: Calling GetKeyboardState isn't particularly good for 
+        // performance, but I don't think I have any other choice. I 
+        // could just read characters from stdin (as I did with Unix 
+        // terminal), but then the movement feels clunky. I also tried 
+        // reading keyboard events from stdin and setting up a WndProc,
+        // but neither of those worked because of various reasons
+        good = GetKeyboardState(rawKeys);
+
+        if (!good) {
+            const char *errorMsg = str::quickFormat(
+                "Failed to get the keyboard state! (%s)", 
+                getErrorString(GetLastError())
+            );
+
+            throw std::runtime_error(errorMsg);
+        }
+
+        // PERF: This loop can be simdified
+        for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+            keys[i]  = (keys[i] & 0x80) >> 1; // Held on previous frame
+            keys[i] |= rawKeys[i] & 0x80;     // Held on this frame
+        }
 
         // Check if there are new records in stdin
         //
@@ -204,32 +243,36 @@ namespace terminal {
         static INPUT_RECORD records[128];
 
         DWORD read = 0;
-        bool good = ReadConsoleInputA(
+        good = ReadConsoleInputA(
             inHandle, 
             records, 
             sizeof(records) / sizeof(records[0]), 
             &read
         );
 
-        if (!good)
-            return;
+        if (!good) {
+            const char *errorMsg = str::quickFormat(
+                "Failed to read the console input! (%s)", 
+                getErrorString(GetLastError())
+            );
+
+            throw std::runtime_error(errorMsg);
+        }
 
         // Update the window size
-        // TODO: For whatever reason this does not always work?
         for (DWORD i = 0; i < read; i++) {
-            INPUT_RECORD &record = records[i];
-
-            if (record.EventType != WINDOW_BUFFER_SIZE_EVENT)
+            if (records[i].EventType != WINDOW_BUFFER_SIZE_EVENT)
                 continue;
 
-            COORD newDimensions = record.Event.WindowBufferSizeEvent.dwSize;
+            WINDOW_BUFFER_SIZE_RECORD &record 
+                = records[i].Event.WindowBufferSizeEvent;
 
-            outDimensions = {
-                (size_t)newDimensions.X, 
-                (size_t)newDimensions.Y
-            };
+            // FIXME: This does not always work. I assume if the program is 
+            // in the middle of something heavy and does not respond to input 
+            // or messages then the event just doesn't get sent
 
-            windowsResized = true;
+            windowResized = true;
+            bufferCells    = record.dwSize;
         }
     }
 
@@ -269,26 +312,84 @@ namespace terminal {
 
 // IO
 
-    bool pollKey(char key)
+    bool getKeyDown(char key)
     {
-        int vKey  = charToVKey[key] & 0xFF;
-        int shift = charToVKey[key] & 0x100;
+        assert(key >= 0);
 
-        bool keyPressed   = GetAsyncKeyState(vKey);
-        bool shiftPressed = GetAsyncKeyState(VK_SHIFT);
+        int  vkey     = charToVKey[key] & 0xFF;
+        bool useShift = charToVKey[key] & 0x100;
 
-        if (!shift)
-            shiftPressed = !shiftPressed;
+        bool shift = keys[VK_SHIFT] & 0x80;
+        if (!useShift)
+            shift = !shift;
 
-        return keyPressed && shiftPressed && !GetAsyncKeyState(VK_CONTROL);
+        bool heldOnThisFrame = keys[vkey] & 0x80;
+        bool heldOnPrevFrame = keys[vkey] & 0x40;
+
+        return heldOnThisFrame && !heldOnPrevFrame && shift;
     }
 
-    Vec2s getScreenSize()
+    bool getKeyHeld(char key)
     {
-        return outDimensions;
+        assert(key >= 0);
+
+        int  vkey     = charToVKey[key] & 0xFF;
+        bool useShift = charToVKey[key] & 0x100;
+
+        bool shift = keys[VK_SHIFT] & 0x80;
+        if (!useShift)
+            shift = !shift;
+
+        bool held = keys[vkey] & 0x80;
+
+        return held && shift;
     }
 
-// Print
+// Screen
+
+    bool getScreenSize(Vec2s &cells, Vec2s &px)
+    {
+        // Set the size in cells
+        cells = {
+            (size_t)bufferCells.X, 
+            (size_t)bufferCells.Y
+        };
+
+        // Set the size in pixels
+        float fontSizeX = args::getFontRatio();
+        float fontSizeY = 1.0f;
+
+        CONSOLE_FONT_INFO font;
+        BOOL good = GetCurrentConsoleFont(outHandle, FALSE, &font);
+
+        // TODO: Add a flag to disable auto font size detection
+        if (good 
+         && font.dwFontSize.X != 0 // Most of the terminals just send fallback 
+         && font.dwFontSize.Y != 0 // values instead of the actual font size
+        ) {
+            fontSizeX = font.dwFontSize.X;
+            fontSizeY = font.dwFontSize.Y;
+        }
+
+        px = {
+            (size_t)(cells.x * fontSizeX),
+            (size_t)(cells.y * fontSizeY),
+        };
+
+        return true;
+    }
+
+    bool shouldResizeWindow()
+    { 
+        return windowResized;
+    }
+
+// Misc
+
+    void resetCursor()
+    {
+        SetConsoleCursorPosition(outHandle, {0, 0});
+    }
 
     void print(const char *string, size_t bytes)
     {
@@ -308,44 +409,18 @@ namespace terminal {
             );
 
             if (!res) {
-                std::stringstream errorMsg;
-                errorMsg << "Call to WriteConsoleA failed! (" 
-                         << getErrorString(GetLastError()) << ")";
+                const char *errorMsg = str::quickFormat(
+                    "Call to WriteConsoleA failed! (%s)", 
+                    getErrorString(GetLastError())
+                );
 
-                throw std::runtime_error(errorMsg.str());
+                throw std::runtime_error(errorMsg);
             }
 
             rest  += written;
             bytes -= written;
         }
     }
-
-    void printBuffer(char *buffer, const Vec2s &dimensions)
-    {
-        SetConsoleCursorPosition(outHandle, {0, 0});
-        print(buffer, dimensions.x);
-
-        for (size_t row = 1; row < dimensions.y; row++) {
-            char *oneBeforeStart = buffer + dimensions.x * (row - 1) 
-                                          + dimensions.x - 1;
-
-            // This is a hack, but I do not want to 
-            // allocate a new string just to insert newlines
-            char originalChar = *oneBeforeStart;
-            *oneBeforeStart = '\n';
-            print(oneBeforeStart, dimensions.x + 1);
-            *oneBeforeStart = originalChar;
-        }
-    }
-
-// Window resizing
-
-    bool shouldResizeWindow()
-    { 
-        return windowsResized;
-    }
-
-// Misc
 
     const char *getErrorString(DWORD code)
     {
@@ -357,13 +432,24 @@ namespace terminal {
             FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
             nullptr, // Ignored because of the first flag
             code,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
             (LPSTR)string,
-            0,      // Ignored because I'm not using the allocate flag
+            sizeof(string) / sizeof(string[0]),
             nullptr // Ignored because of the last flag
         );
 
-        assert(length > 0);
+        if (length == 0) {
+            const char *errorCode = str::quickFormat(
+                "Failed to generate an error string (tried to generate a string for 0x%x, failed with 0x%x)\n", 
+                code, GetLastError()
+            );
+
+            throw std::runtime_error(errorCode);
+        }
+
+        // Removing a newline character. Subtracting 2 because on Windows 
+        // a newline is \r\n (I wonder why do I even have to do this ._.)
+        string[length - 2] = '\0';
 
         #ifdef UNICODE
             // Converting from UTF-16 to UTF-8

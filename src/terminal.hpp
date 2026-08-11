@@ -10,9 +10,13 @@ namespace terminal {
     void update();
     void cleanup();
 
-    bool pollKey(char key);
+    bool getKeyDown(char key);
+    bool getKeyHeld(char key);
 
-    Vec2s getScreenSize();
+    bool getScreenSize(Vec2s &cells, Vec2s &px);
+    bool shouldResizeWindow();
+
+    void resetCursor();
 
     void print(const char *string, size_t bytes);
 
@@ -21,8 +25,4 @@ namespace terminal {
         size_t size = strlen(string);
         print(string, size);
     }
-
-    void printBuffer(char *buffer, const Vec2s &dimensions);
-
-    bool shouldResizeWindow();
 }
