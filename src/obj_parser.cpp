@@ -28,8 +28,8 @@ namespace obj {
         int errorCount = 0;
         constexpr int errorLimit = 50;
 
-        Vec3f bbMin = {FLT_MAX, FLT_MAX, FLT_MAX};
-        Vec3f bbMax = {FLT_MIN, FLT_MIN, FLT_MIN};
+        Vec3f bbMin = { FLT_MAX,  FLT_MAX,  FLT_MAX};
+        Vec3f bbMax = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
 
         while (std::getline(file, line)) {
             // Handling CRLF manually because the user could easily 
