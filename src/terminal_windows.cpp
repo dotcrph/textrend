@@ -364,6 +364,7 @@ namespace terminal {
 
         // TODO: Add a flag to disable auto font size detection
         if (good 
+         && args::getDetectFontSize()
          && font.dwFontSize.X != 0 // Most of the terminals just send fallback 
          && font.dwFontSize.Y != 0 // values instead of the actual font size
         ) {

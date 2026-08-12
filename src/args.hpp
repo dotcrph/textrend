@@ -6,8 +6,11 @@
 
 namespace args {
     int   getVerbosity();
-    float getFontRatio();
     bool  getFlipY();
+
+    // Windows only flags
+    bool  getDetectFontSize();
+    float getFontRatio();
 
     bool read(int argc, char *argv[], std::string &objPath);
 

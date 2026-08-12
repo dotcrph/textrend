@@ -28,8 +28,9 @@ This renderer only accepts ```.obj``` files, and you must always pass the file b
 | Flag | Description | 
 | ------------- | -------------- |
 | -v --verbosity | Set verbosity level | 
-| -f --font --font-ratio | Set font width-to-height ratio | 
 | -y --flip-y | Flip camera Y rotation | 
+| --font --font-ratio | (Windows) Set fallback font width-to-height ratio | 
+| --no-detect-font --no-detect-font-size | (Windows) Disable auto font size detection. Use this if your terminal reports incorrect information | 
 | -h --help | Print help message | 
 
 ## 🪲 Known issues

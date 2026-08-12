@@ -14,22 +14,24 @@ namespace args {
 
     int getVerbosity() { return verbosity; }
 
+    bool flipY = false;
+    bool getFlipY() { return flipY; }
+
+    // Windows only flags
+    bool detectFontSize = true;
+    bool getDetectFontSize() { return detectFontSize; }
+
     // NOTE: The default is the ratio of a single glyph in 
     // Consolas, which likely is different in other fonts
     float fontRatio = 0.45f;
     float getFontRatio() { return fontRatio; }
-
-    // TODO: Add a flag to disable auto font size detection for Windows
-
-    bool flipY = false;
-    bool getFlipY() { return flipY; }
 
     bool read(int argc, char *argv[], std::string &objPath)
     {
         if (argc <= 1 
          || strcmp(argv[1], "-h") == 0
          || strcmp(argv[1], "--help") == 0
-         ) {
+        ) {
             printHelp();
             return false;
         }
@@ -85,7 +87,42 @@ namespace args {
                     verbosity = *digit - '0';
                 } break;
 
-                case str::djb2("-f"):
+                case str::djb2("-y"):
+                case str::djb2("--flip-y"): 
+                {
+                    flipY = true;
+
+                    char nextChar = *(flagEnd + 1);
+
+                    if (nextChar != '\0') {
+                        logger::warning(
+                            "Argument #%d (%.*s): Ignoring everything after '%c'", 
+                            i - 1,               // %d
+                            flagEnd - flagStart, // %.*s
+                            flagStart,           // %.*s
+                            nextChar             // %c
+                        );
+                    }
+                } break;
+
+                case str::djb2("--no-detect-font"): 
+                case str::djb2("--no-detect-font-size"): 
+                {
+                    detectFontSize = false;
+
+                    char nextChar = *(flagEnd + 1);
+
+                    if (nextChar != '\0') {
+                        logger::warning(
+                            "Argument #%d (%.*s): Ignoring everything after '%c'", 
+                            i - 1,               // %d
+                            flagEnd - flagStart, // %.*s
+                            flagStart,           // %.*s
+                            nextChar             // %c
+                        );
+                    }
+                } break;
+
                 case str::djb2("--font"): 
                 case str::djb2("--font-ratio"): 
                 {
@@ -130,24 +167,6 @@ namespace args {
                     fontRatio = ratio;
                 } break;
 
-                case str::djb2("-y"):
-                case str::djb2("--flip-y"): 
-                {
-                    flipY = true;
-
-                    char nextChar = *(flagEnd + 1);
-
-                    if (nextChar != '\0') {
-                        logger::warning(
-                            "Argument #%d (%.*s): Ignoring everything after '%c'", 
-                            i - 1,               // %d
-                            flagEnd - flagStart, // %.*s
-                            flagStart,           // %.*s
-                            nextChar             // %c
-                        );
-                    }
-                } break;
-
                 default:
                 {
                     logger::warning(
@@ -181,16 +200,20 @@ namespace args {
 "                                                                           \n"
 "        ESC          : Exit                                                \n"
 "Args:                                                                      \n"
-"        -v --verbosity         : Set verbosity level                       \n"
-"            -v=0               : Silent                                    \n"
-"            -v=1               : Errors only                               \n"
-"            -v=2               : Errors and warnings (default)             \n"
-"            -v=3               : Full                                      \n"
+"        -v --verbosity        : Set verbosity level                        \n"
+"            -v=0              :   Silent                                   \n"
+"            -v=1              :   Errors only                              \n"
+"            -v=2              :   Errors and warnings (default)            \n"
+"            -v=3              :   Full                                     \n"
 "                                                                           \n"
-"        -f --font --font-ratio : Set font width to height ratio            \n"
-"            -f=0.45            : Default                                   \n"
+"        -y --flip-y           : Flip camera Y rotation                     \n"
 "                                                                           \n"
-"        -y --flip-y            : Flip camera Y rotation                    \n"
+"        --no-detect-font      : Disable font size detection                \n"
+"        --no-detect-font-size :   Used on Windows if your terminal         \n"
+"                              :   reports incorrect font information       \n"
+"                                                                           \n"
+"        --font --font-ratio   : Set fallback font width to height ratio    \n"
+"            --font=0.45       :   Default (Consolas 11pt)                  \n"
         );
     }
 
