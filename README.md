@@ -25,13 +25,16 @@ This renderer only accepts ```.obj``` files, and you must always pass the file b
 
 ## 🚩 Arguments
 
-| Flag | Description | 
+| Argument | Description | 
 | ------------- | -------------- |
 | -v --verbosity | Set verbosity level | 
 | -y --flip-y | Flip camera Y rotation | 
-| --font --font-ratio | (Windows) Set fallback font width-to-height ratio | 
-| --no-detect-font --no-detect-font-size | (Windows) Disable auto font size detection. Use this if your terminal reports incorrect information | 
+| --no-detect-font --no-detect-font-size | (Windows only) Disable auto font size detection; use this if your terminal reports incorrect information | 
+| --font --font-ratio | (Windows only) Set fallback font width-to-height ratio | 
 | -h --help | Print help message | 
+
+> [!NOTE]
+> ```--no-detect-font``` is enabled automatically if your terminal reports a font size that has 0 as one of its dimensions. The majority of modern terminals on Windows report {0, 16} as the size, so the renderer uses the fallback value.
 
 ## 🪲 Known issues
 
