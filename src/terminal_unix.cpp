@@ -101,9 +101,8 @@ namespace terminal {
         }
         
         printLiteral(
-            "\x1b[?47h" // Switch to the alternate screen buffer
-            "\x1b[?25l" // Hide the cursor
-            "\x1b[s"    // Save the position of the cursor
+            "\x1b[?25l"   // Hide the cursor
+            "\x1b[?1049h" // Switch to the alternate screen buffer
         );
         
         return true;
@@ -145,9 +144,8 @@ namespace terminal {
         // Close output fd
         if (outputFD != -1) {
             printLiteral(
-                "\x1b[u"    // Restore the position of the curspr
-                "\x1b[?25h" // Show the cursor
-                "\x1b[?47l" // Switch to the main buffer
+                "\x1b[?1049l" // Switch to the main buffer
+                "\x1b[?25h"   // Show the cursor
             );
 
             close(outputFD);
