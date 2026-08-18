@@ -130,16 +130,11 @@ namespace str {
                      // past the end of the lexeme
 
         if (errno == ERANGE) {
+            // FIXME: Windows API defines HUGE_VALF as infinity, and this 
+            // project is using -ffast-math. This might cause some problems
             if (result == HUGE_VALF || result == -HUGE_VALF)
                 return ParseError::Overflow;
 
-            // FIXME: This is unreliable, because some platforms might not 
-            // set errno to ERANGE when underflow happens. As of now, I have 
-            // only tested this code on glibc 2.39-0ubuntu8.6, and it seems 
-            // to be working. I do not really have a better way of detecting 
-            // it, especially since I am compiling with -ffast-math. The worst 
-            // case scenario for the user is that they will recieve a 0.0 
-            // instead of an error, which is bad but (I hope) not catastrophic
             return ParseError::Underflow;
         }
 
