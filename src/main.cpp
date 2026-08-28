@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     }
 
     Mesh *meshWS = new Mesh();
-    defer_lambda(delete meshWS);
+    defer(delete meshWS);
 
     good = obj::parse(objFile, meshWS);
     if (!good)
@@ -47,14 +47,14 @@ int main(int argc, char *argv[])
 
     // Set up terminal environment
     good = terminal::initialize();
-    defer(terminal::cleanup);
+    defer(terminal::cleanup());
 
     if (!good)
         return 1;
 
     // Initialize buffers
     good = screen::initialize();
-    defer(screen::cleanup);
+    defer(screen::cleanup());
 
     if (!good)
         return 1;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     camera.center(meshWS, screen::getWidthDivHeight());
 
     Mesh *meshDisplayed = new Mesh();
-    defer_lambda(delete meshDisplayed);
+    defer(delete meshDisplayed);
 
     // NOTE: Multiplying the original size to account for new vertices 
     // generated after clipping (using the worst case scenario for each)

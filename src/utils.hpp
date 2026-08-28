@@ -7,42 +7,28 @@
 #define concatImpl(a, b) a##b
 #define concat(a, b) concatImpl(a, b)
 
-class DeferClass
-{
-private:
-    void (*f)();
-public:
-    DeferClass(void (*f)()) : f(f) {}
-    ~DeferClass() { f(); }
-};
-
-#define defer(funcPtr) \
-    DeferClass concat(_defer_, __COUNTER__)(funcPtr)
-
 // Using a template + a factory function because it does 
 // not allocate things on the heap unlike std::function 
 // (thanks http://the-witness.net/news/2012/11/scopeexit-in-c11/)
 template <typename F>
-class DeferTemplatedClass
+class DeferClass
 {
 private:
     F f;
 public:
-    DeferTemplatedClass(F f) : f(f) {}
-    ~DeferTemplatedClass() { f(); }
+    DeferClass(F f) : f(f) {}
+    ~DeferClass() { f(); }
 };
 
 template <typename F>
-DeferTemplatedClass<F> CreateDeferTemplated(F f)
+DeferClass<F> CreateDefer(F f)
 {
-    return DeferTemplatedClass<F>(f);
+    return DeferClass<F>(f);
 }
 
-// This kinda breaks the camelCase convention, but I like it more 
-// because this follows the conventions of the built-in keywords
-#define defer_lambda(body) \
-    auto concat(_defer_lambda_, __COUNTER__) \
-        = CreateDeferTemplated([&](){body;})
+#define defer(body) \
+    auto concat(_defer_, __COUNTER__) \
+        = CreateDefer([&](){body;})
 
 // Stream insertion overload for unit tests
 template <typename T>
@@ -57,6 +43,7 @@ std::ostream &operator<<(std::ostream &o, const std::vector<T> &v)
 }
 
 namespace str {
+
 // General
 
     bool compareSlice(

@@ -70,7 +70,7 @@ f 5/6/6 1/12/6 8/11/6)"
     );
 
     Mesh *result = new Mesh();
-    defer_lambda(delete result);
+    defer(delete result);
 
     obj::parse(file, result);
 
