@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <sstream>
 #include <stdexcept>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -231,11 +230,12 @@ namespace terminal {
                 if (errno == EINTR)
                     continue;
 
-                std::stringstream errorMsg;
-                errorMsg << "Failed to write to /dev/tty! (errno " 
-                         << errno << ": " << strerror(errno) << ")";
+                const char *errorMsg = str::quickFormat(
+                    "Failed to write to /dev/tty! (errno %d: %s)", 
+                    errno, strerror(errno)
+                );
 
-                throw std::runtime_error(errorMsg.str());
+                throw std::runtime_error(errorMsg);
             }
 
             rest  += written;
