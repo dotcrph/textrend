@@ -454,43 +454,6 @@ namespace terminal {
         // Removing a newline character. Subtracting 2 because on Windows 
         // a newline is \r\n (I wonder why do I even have to do this ._.)
         string[length - 2] = '\0';
-
-        #ifdef UNICODE
-            // Converting from UTF-16 to UTF-8
-            //
-            // If we're using ANSI then LPTSTR == char *, 
-            // so we don't need to convert
-
-            int newLength = WideCharToMultiByte(
-                CP_UTF8, 
-                0, 
-                (LPCWCH)string,
-                -1,
-                nullptr,
-                0,
-                nullptr,
-                nullptr
-            );
-
-            if (newLength > sizeof(string))
-                throw std::runtime_error("Error message too large");
-
-            static char utf8String[sizeof(string)] = {};
-
-            WideCharToMultiByte(
-                CP_UTF8, 
-                0, 
-                (LPCWCH)string,
-                -1,
-                utf8String,
-                newLength,
-                nullptr,
-                nullptr
-            );
-
-            memcpy(string, utf8String, newLength);
-        #endif
-
         return string;
     }
 
