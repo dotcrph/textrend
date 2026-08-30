@@ -1,10 +1,12 @@
 #include "args.hpp"
-#include "utils.hpp"
 
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <string>
+
+#include "utils.hpp"
+#include "logger.hpp"
 
 namespace args {
     int verbosity = 2; // 0 = Silent

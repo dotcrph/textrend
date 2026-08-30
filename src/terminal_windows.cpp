@@ -10,6 +10,7 @@
 
 #include "args.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 namespace terminal {
     HANDLE inHandle  = nullptr;

@@ -1,5 +1,4 @@
 #include "utils.hpp"
-#include "args.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -170,48 +169,3 @@ namespace str {
     }
 }
 
-namespace logger {
-    void error(const char *fmt, ...)
-    {
-        if (args::getVerbosity() < 1)
-            return;
-
-        va_list args;
-        va_start(args, fmt);
-        prefixedPrintf(stderr, "[E] ", fmt, args);
-        va_end(args);
-    }
-
-    void warning(const char *fmt, ...)
-    {
-        if (args::getVerbosity() < 2)
-            return;
-
-        va_list args;
-        va_start(args, fmt);
-        prefixedPrintf(stderr, "[W] ", fmt, args);
-        va_end(args);
-    }
-
-    void info(const char *fmt, ...)
-    {
-        if (args::getVerbosity() < 3)
-            return;
-
-        va_list args;
-        va_start(args, fmt);
-        prefixedPrintf(stderr, "[i] ", fmt, args);
-        va_end(args);
-    }
-
-    void prefixedPrintf(
-        FILE *stream, 
-        const char *prefix, 
-        const char *fmt, 
-        va_list args)
-    {
-        fputs(prefix, stream);
-        vfprintf(stream, fmt, args);
-        putc('\n', stream);
-    }
-}

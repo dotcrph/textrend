@@ -19,6 +19,7 @@
 
 #include "utils.hpp"
 #include "math.hpp"
+#include "logger.hpp"
 
 namespace terminal {
     int inputFD              = -1;

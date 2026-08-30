@@ -8,6 +8,7 @@ set(
     "obj_parser.cpp"
     "rasterizer.cpp"
     "transform.cpp"
+    "logger.cpp"
 )
 
 if(WIN32)

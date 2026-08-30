@@ -15,6 +15,7 @@
 #include "mesh.hpp"
 #include "utils.hpp"
 #include "transform.hpp"
+#include "logger.hpp"
 
 namespace obj {
     bool parse(std::istream &file, Mesh *mesh)

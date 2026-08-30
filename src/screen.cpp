@@ -16,8 +16,8 @@ namespace screen {
     Vec2s bufferDimensions; // Exclusive (last index + 1)
     Vec2s getBufferDimensions() { return bufferDimensions; }
 
-    char  *frameBuffer;
-    float *depthBuffer;
+    char  *frameBuffer = nullptr;
+    float *depthBuffer = nullptr;
 
     float widthDivHeight;
     float getWidthDivHeight() { return widthDivHeight; }

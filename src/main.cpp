@@ -13,6 +13,7 @@
 #include "utils.hpp"
 #include "obj_parser.hpp"
 #include "rasterizer.hpp"
+#include "logger.hpp"
 
 Mesh *meshWS        = nullptr;
 Mesh *meshDisplayed = nullptr;
@@ -60,6 +61,8 @@ int main(int argc, char *argv[])
         quit();
         return 1;
     }
+
+    logger::enableCaching();
 
     // Initialize buffers
     good = screen::initialize();
@@ -158,4 +161,6 @@ void quit()
 
     delete meshWS;
     delete meshDisplayed;
+
+    logger::flushCache();
 }
