@@ -70,11 +70,12 @@ f 5/6/6 1/12/6 8/11/6)"
     );
 
     Mesh *result = new Mesh();
-    defer(delete result);
 
     obj::parse(file, result);
 
-    ASSERT_NE(result, nullptr) << testing::internal::GetCapturedStderr();
+    EXPECT_NE(result, nullptr) << testing::internal::GetCapturedStderr();
+
+    delete result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

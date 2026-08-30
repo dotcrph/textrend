@@ -4,32 +4,6 @@
 #include <ostream>
 #include <vector>
 
-#define concatImpl(a, b) a##b
-#define concat(a, b) concatImpl(a, b)
-
-// Using a template + a factory function because it does 
-// not allocate things on the heap unlike std::function 
-// (thanks http://the-witness.net/news/2012/11/scopeexit-in-c11/)
-template <typename F>
-class DeferClass
-{
-private:
-    F f;
-public:
-    DeferClass(F f) : f(f) {}
-    ~DeferClass() { f(); }
-};
-
-template <typename F>
-DeferClass<F> CreateDefer(F f)
-{
-    return DeferClass<F>(f);
-}
-
-#define defer(body) \
-    auto concat(_defer_, __COUNTER__) \
-        = CreateDefer([&](){body;})
-
 // Stream insertion overload for unit tests
 template <typename T>
 std::ostream &operator<<(std::ostream &o, const std::vector<T> &v)

@@ -14,6 +14,9 @@
 #include "obj_parser.hpp"
 #include "rasterizer.hpp"
 
+Mesh *meshWS        = nullptr;
+Mesh *meshDisplayed = nullptr;
+
 int main(int argc, char *argv[])
 {
     bool good;
@@ -22,8 +25,10 @@ int main(int argc, char *argv[])
     std::string objPath;
     good = args::read(argc, argv, objPath);
 
-    if (!good)
+    if (!good) {
+        quit();
         return 1;
+    }
 
     // Open the OBJ file and parse the contents
 
@@ -33,38 +38,42 @@ int main(int argc, char *argv[])
 
     if (!objFile.is_open()) {
         logger::error("Could not open file '%s' for reading", objPath.c_str());
+
+        quit();
         return 1;
     }
 
-    Mesh *meshWS = new Mesh();
-    defer(delete meshWS);
+    meshWS = new Mesh();
 
     good = obj::parse(objFile, meshWS);
-    if (!good)
-        return 1;
-
     objFile.close();
+
+    if (!good) {
+        quit();
+        return 1;
+    }
 
     // Set up terminal environment
     good = terminal::initialize();
-    defer(terminal::cleanup());
 
-    if (!good)
+    if (!good) {
+        quit();
         return 1;
+    }
 
     // Initialize buffers
     good = screen::initialize();
-    defer(screen::cleanup());
 
-    if (!good)
+    if (!good) {
+        quit();
         return 1;
+    }
 
     // Main loop
     Camera camera;
     camera.center(meshWS, screen::getWidthDivHeight());
 
-    Mesh *meshDisplayed = new Mesh();
-    defer(delete meshDisplayed);
+    meshDisplayed = new Mesh();
 
     // NOTE: Multiplying the original size to account for new vertices 
     // generated after clipping (using the worst case scenario for each)
@@ -125,6 +134,7 @@ int main(int argc, char *argv[])
         screen::print();
     }
 
+    quit();
     return 0;
 }
 
@@ -139,4 +149,13 @@ double updateDeltaTime(
     lastFrameTime = currentFrameTime;
 
     return frameTimeDuration.count();
+}
+
+void quit()
+{
+    terminal::cleanup();
+    screen::cleanup();
+
+    delete meshWS;
+    delete meshDisplayed;
 }
