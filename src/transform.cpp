@@ -1,9 +1,10 @@
 #include "transform.hpp"
 
 #include <cstring>
-#include <stdexcept>
 #include <vector>
 
+#include "utils.hpp"
+#include "logger.hpp"
 #include "mesh.hpp"
 #include "camera.hpp"
 
@@ -234,7 +235,7 @@ namespace transform {
         }
     }
 
-    std::vector<Triangle> earClipping(
+    result<std::vector<Triangle>> earClipping(
         const Mesh *mesh, 
         const Polygon &polygon)
     {
@@ -245,7 +246,7 @@ namespace transform {
         );
     }
 
-    std::vector<Triangle> earClipping(
+    result<std::vector<Triangle>> earClipping(
         const Mesh *mesh, 
         const size_t *indices,
         const size_t size)
@@ -319,7 +320,7 @@ namespace transform {
                 newTriangle.indices[1] = tipIndex;
                 newTriangle.indices[2] = rightIndex;
 
-                return out;
+                return {true, out};
             }
 
             // Vertices
@@ -382,8 +383,11 @@ namespace transform {
             nextIndex[index0] = index2;
         }
 
-        // TODO: Print a message to the user?
-        throw std::logic_error("Triangulation algorithm reached maximum iteration count");
+        logger::error(
+            "Triangulation algorithm reached maximum iteration count"
+        );
+
+        return {false, {}};
     }
 
     std::vector<Triangle> earClippingConvex(

@@ -2,6 +2,7 @@
 
 #include "mesh.hpp"
 #include "camera.hpp"
+#include "utils.hpp"
 
 namespace transform {
     void worldToClip(
@@ -16,14 +17,14 @@ namespace transform {
         const Camera &camera
     );
 
-    std::vector<Triangle> earClipping(
+    result<std::vector<Triangle>> earClipping(
+        const Mesh *mesh, 
+        const Polygon &polygon);
+
+    result<std::vector<Triangle>> earClipping(
         const Mesh *mesh, 
         const size_t *indices,
         const size_t size);
-
-    std::vector<Triangle> earClipping(
-        const Mesh *mesh, 
-        const Polygon &polygon);
 
     std::vector<Triangle> earClippingConvex(
         const Mesh *mesh, 

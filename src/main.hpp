@@ -5,4 +5,4 @@
 double updateDeltaTime(
     std::chrono::time_point<std::chrono::steady_clock> &lastFrameTime);
 
-void quit();
+int run(int argc, char *argv[]);

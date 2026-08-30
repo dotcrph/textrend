@@ -4,6 +4,14 @@
 #include <ostream>
 #include <vector>
 
+// Something similar to C++23 std::expected
+template <typename T>
+struct result
+{
+    bool success;
+    T v;
+};
+
 // Stream insertion overload for unit tests
 template <typename T>
 std::ostream &operator<<(std::ostream &o, const std::vector<T> &v)

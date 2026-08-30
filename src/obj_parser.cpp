@@ -117,10 +117,13 @@ namespace obj {
             if (!parseFace(c, lineNumber, mesh, polygon))
                 return false;
 
-            std::vector<Triangle> tris 
+            result<std::vector<Triangle>> tris 
                 = transform::earClipping(mesh, polygon);
 
-            for (Triangle &triangle : tris)
+            if (!tris.success)
+                return false;
+
+            for (Triangle &triangle : tris.v)
                 mesh->faces.push_back(triangle);
 
             return true;

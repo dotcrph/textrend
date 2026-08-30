@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include "transform.hpp"
 
-#include "utils.hpp" // IWYU pragma: keep
-                     // For stream insertion overloads
+#include "utils.hpp" 
 #include "mesh.hpp"
 
 template <typename T>
@@ -46,17 +45,18 @@ TEST(EarClipping, Sanity)
     Polygon p;
     p.indices = {0, 1, 2, 3};
 
-    std::vector<Triangle> result = transform::earClipping(&m, p);
+    result<std::vector<Triangle>> r = transform::earClipping(&m, p);
 
-    ASSERT_EQ(m.faces.size(), result.size());
-
-    ASSERT_TRUE(
-        cArrayEq(result[0].indices, m.faces[0].indices, 3)
-    ) << result;
+    ASSERT_TRUE(r.success);
+    ASSERT_EQ(m.faces.size(), r.v.size());
 
     ASSERT_TRUE(
-        cArrayEq(result[1].indices, m.faces[1].indices, 3)
-    ) << result;
+        cArrayEq(r.v[0].indices, m.faces[0].indices, 3)
+    ) << r.v;
+
+    ASSERT_TRUE(
+        cArrayEq(r.v[1].indices, m.faces[1].indices, 3)
+    ) << r.v;
 }
 
 TEST(EarClipping, Triangle)
@@ -80,14 +80,15 @@ TEST(EarClipping, Triangle)
     Polygon p;
     p.indices = {0, 1, 2};
 
-    std::vector<Triangle> result = transform::earClipping(&m, p);
+    result<std::vector<Triangle>> r = transform::earClipping(&m, p);
 
-    ASSERT_EQ(m.faces.size(), result.size());
+    ASSERT_TRUE(r.success);
+    ASSERT_EQ(m.faces.size(), r.v.size());
 
-    for (size_t i = 0; i < result.size(); i++) {
+    for (size_t i = 0; i < r.v.size(); i++) {
         ASSERT_TRUE(
-            cArrayEq(result[i].indices, m.faces[i].indices, 3)
-        ) << result;
+            cArrayEq(r.v[i].indices, m.faces[i].indices, 3)
+        ) << r.v;
     }
 }
 
@@ -117,14 +118,15 @@ TEST(EarClipping, CollinearEdge)
     Polygon p;
     p.indices = {0, 1, 2, 3};
 
-    std::vector<Triangle> result = transform::earClipping(&m, p);
+    result<std::vector<Triangle>> r = transform::earClipping(&m, p);
 
-    ASSERT_EQ(m.faces.size(), result.size());
+    ASSERT_TRUE(r.success);
+    ASSERT_EQ(m.faces.size(), r.v.size());
 
-    for (size_t i = 0; i < result.size(); i++) {
+    for (size_t i = 0; i < r.v.size(); i++) {
         ASSERT_TRUE(
-            cArrayEq(result[i].indices, m.faces[i].indices, 3)
-        ) << result;
+            cArrayEq(r.v[i].indices, m.faces[i].indices, 3)
+        ) << r.v;
     }
 }
 
@@ -159,14 +161,15 @@ TEST(EarClipping, Concave)
     Polygon p;
     p.indices = {0, 1, 2, 3, 4};
 
-    std::vector<Triangle> result = transform::earClipping(&m, p);
+    result<std::vector<Triangle>> r = transform::earClipping(&m, p);
 
-    ASSERT_EQ(m.faces.size(), result.size());
+    ASSERT_TRUE(r.success);
+    ASSERT_EQ(m.faces.size(), r.v.size());
 
-    for (size_t i = 0; i < result.size(); i++) {
+    for (size_t i = 0; i < r.v.size(); i++) {
         ASSERT_TRUE(
-            cArrayEq(result[i].indices, m.faces[i].indices, 3)
-        ) << result;
+            cArrayEq(r.v[i].indices, m.faces[i].indices, 3)
+        ) << r.v;
     }
 }
 
@@ -206,14 +209,15 @@ TEST(EarClipping, NonPlanarPolygonEasy)
     Polygon p;
     p.indices = {0, 1, 2, 3, 4, 5};
 
-    std::vector<Triangle> result = transform::earClipping(&m, p);
+    result<std::vector<Triangle>> r = transform::earClipping(&m, p);
 
-    ASSERT_EQ(m.faces.size(), result.size());
+    ASSERT_TRUE(r.success);
+    ASSERT_EQ(m.faces.size(), r.v.size());
 
-    for (size_t i = 0; i < result.size(); i++) {
+    for (size_t i = 0; i < r.v.size(); i++) {
         ASSERT_TRUE(
-            cArrayEq(result[i].indices, m.faces[i].indices, 3)
-        ) << result;
+            cArrayEq(r.v[i].indices, m.faces[i].indices, 3)
+        ) << r.v;
     }
 }
 
@@ -253,14 +257,15 @@ TEST(EarClipping, NonPlanarPolygonHard)
     Polygon p;
     p.indices = {0, 1, 2, 3, 4, 5};
 
-    std::vector<Triangle> result = transform::earClipping(&m, p);
+    result<std::vector<Triangle>> r = transform::earClipping(&m, p);
 
-    ASSERT_EQ(m.faces.size(), result.size());
+    ASSERT_TRUE(r.success);
+    ASSERT_EQ(m.faces.size(), r.v.size());
 
-    for (size_t i = 0; i < result.size(); i++) {
+    for (size_t i = 0; i < r.v.size(); i++) {
         ASSERT_TRUE(
-            cArrayEq(result[i].indices, m.faces[i].indices, 3)
-        ) << result;
+            cArrayEq(r.v[i].indices, m.faces[i].indices, 3)
+        ) << r.v;
     }
 }
 
@@ -295,14 +300,15 @@ TEST(EarClipping, PointInsideEar)
     Polygon p;
     p.indices = {0, 1, 2, 3, 4};
 
-    std::vector<Triangle> result = transform::earClipping(&m, p);
+    result<std::vector<Triangle>> r = transform::earClipping(&m, p);
 
-    ASSERT_EQ(m.faces.size(), result.size());
+    ASSERT_TRUE(r.success);
+    ASSERT_EQ(m.faces.size(), r.v.size());
 
-    for (size_t i = 0; i < result.size(); i++) {
+    for (size_t i = 0; i < r.v.size(); i++) {
         ASSERT_TRUE(
-            cArrayEq(result[i].indices, m.faces[i].indices, 3)
-        ) << result;
+            cArrayEq(r.v[i].indices, m.faces[i].indices, 3)
+        ) << r.v;
     }
 }
 

@@ -7,7 +7,7 @@
 
 namespace terminal {
     bool initialize();
-    void update();
+    bool update();
     void cleanup();
 
     bool getKeyDown(char key);
@@ -18,11 +18,11 @@ namespace terminal {
 
     void resetCursor();
 
-    void print(const char *string, size_t bytes);
+    bool print(const char *string, size_t bytes);
 
-    inline void printLiteral(const char *string)
+    inline bool printLiteral(const char *string)
     {
         size_t size = strlen(string);
-        print(string, size);
+        return print(string, size);
     }
 }

@@ -7,7 +7,7 @@ namespace screen {
     void cleanup();
 
     void clear();
-    void print();
+    bool print();
 
     Vec2s getBufferDimensions();
     float getWidthDivHeight();

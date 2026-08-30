@@ -56,10 +56,11 @@ namespace screen {
             depthBuffer[i] = FLT_MAX;
     }
 
-    void print()
+    bool print()
     {
         terminal::resetCursor();
-        terminal::print(frameBuffer, bufferDimensions.x);
+        if (!terminal::print(frameBuffer, bufferDimensions.x))
+            return false;
 
         for (size_t row = 1; row < bufferDimensions.y; row++) {
             char *oneBeforeFirst = frameBuffer 
@@ -70,9 +71,14 @@ namespace screen {
             // allocate a new string just to insert newlines
             char originalChar = *oneBeforeFirst;
             *oneBeforeFirst = '\n';
-            terminal::print(oneBeforeFirst, bufferDimensions.x + 1);
+
+            if (!terminal::print(oneBeforeFirst, bufferDimensions.x + 1))
+                return false;
+
             *oneBeforeFirst = originalChar;
         }
+
+        return true;
     }
 
     size_t cellToIndex(Vec2s cell)

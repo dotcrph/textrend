@@ -192,7 +192,7 @@ namespace terminal {
         return true;
     }
 
-    void update()
+    bool update()
     {
         BOOL good;
 
@@ -216,12 +216,12 @@ namespace terminal {
         good = GetKeyboardState(rawKeys);
 
         if (!good) {
-            const char *errorMsg = str::quickFormat(
+            logger::error(
                 "Failed to get the keyboard state! (%s)", 
                 getErrorString(GetLastError())
             );
 
-            throw std::runtime_error(errorMsg);
+            return false;
         }
 
         // PERF: This loop can be simdified
@@ -252,12 +252,12 @@ namespace terminal {
         );
 
         if (!good) {
-            const char *errorMsg = str::quickFormat(
+            logger::error(
                 "Failed to read the console input! (%s)", 
                 getErrorString(GetLastError())
             );
 
-            throw std::runtime_error(errorMsg);
+            return false;
         }
 
         // Update the window size
@@ -275,6 +275,8 @@ namespace terminal {
             windowResized = true;
             bufferCells    = record.dwSize;
         }
+
+        return true;
     }
 
     void cleanup()
@@ -393,7 +395,7 @@ namespace terminal {
         SetConsoleCursorPosition(outHandle, {0, 0});
     }
 
-    void print(const char *string, size_t bytes)
+    bool print(const char *string, size_t bytes)
     {
         assert(outHandle != nullptr);
 
@@ -411,12 +413,12 @@ namespace terminal {
             );
 
             if (!res) {
-                const char *errorMsg = str::quickFormat(
+                logger::error(
                     "Call to WriteConsoleA failed! (%s)", 
                     getErrorString(GetLastError())
                 );
 
-                throw std::runtime_error(errorMsg);
+                return false;
             }
 
             rest  += written;

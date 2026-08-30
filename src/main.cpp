@@ -20,16 +20,41 @@ Mesh *meshDisplayed = nullptr;
 
 int main(int argc, char *argv[])
 {
+    int code = run(argc, argv);
+
+    terminal::cleanup();
+    screen::cleanup();
+
+    delete meshWS;
+    delete meshDisplayed;
+
+    logger::flushCache();
+    return code;
+}
+
+double updateDeltaTime(
+    std::chrono::time_point<std::chrono::steady_clock> &lastFrameTime)
+{
+    auto currentFrameTime = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double> frameTimeDuration
+        = currentFrameTime - lastFrameTime;
+
+    lastFrameTime = currentFrameTime;
+
+    return frameTimeDuration.count();
+}
+
+int run(int argc, char *argv[])
+{
     bool good;
 
     // Read args
     std::string objPath;
     good = args::read(argc, argv, objPath);
 
-    if (!good) {
-        quit();
+    if (!good)
         return 1;
-    }
 
     // Open the OBJ file and parse the contents
 
@@ -39,8 +64,6 @@ int main(int argc, char *argv[])
 
     if (!objFile.is_open()) {
         logger::error("Could not open file '%s' for reading", objPath.c_str());
-
-        quit();
         return 1;
     }
 
@@ -49,28 +72,22 @@ int main(int argc, char *argv[])
     good = obj::parse(objFile, meshWS);
     objFile.close();
 
-    if (!good) {
-        quit();
+    if (!good)
         return 1;
-    }
 
     // Set up terminal environment
     good = terminal::initialize();
 
-    if (!good) {
-        quit();
+    if (!good)
         return 1;
-    }
 
     logger::enableCaching();
 
     // Initialize buffers
     good = screen::initialize();
 
-    if (!good) {
-        quit();
+    if (!good)
         return 1;
-    }
 
     // Main loop
     Camera camera;
@@ -101,7 +118,8 @@ int main(int argc, char *argv[])
 
         // NOTE: terminal::update() resets the window 
         // resizing flag, so I'm calling it after
-        terminal::update();
+        if (!terminal::update())
+            return 1;
 
         if (terminal::getKeyHeld('\x1b'))
             running = false;
@@ -134,33 +152,11 @@ int main(int argc, char *argv[])
         );
 
         screen::drawText(5, 2, debugString);
-        screen::print();
+
+        if (!screen::print())
+            return 1;
     }
 
-    quit();
     return 0;
 }
 
-double updateDeltaTime(
-    std::chrono::time_point<std::chrono::steady_clock> &lastFrameTime)
-{
-    auto currentFrameTime = std::chrono::steady_clock::now();
-
-    std::chrono::duration<double> frameTimeDuration
-        = currentFrameTime - lastFrameTime;
-
-    lastFrameTime = currentFrameTime;
-
-    return frameTimeDuration.count();
-}
-
-void quit()
-{
-    terminal::cleanup();
-    screen::cleanup();
-
-    delete meshWS;
-    delete meshDisplayed;
-
-    logger::flushCache();
-}

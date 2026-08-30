@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <stdexcept>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -17,7 +16,6 @@
 #include <unistd.h>
 #include <poll.h>
 
-#include "utils.hpp"
 #include "math.hpp"
 #include "logger.hpp"
 
@@ -108,7 +106,7 @@ namespace terminal {
         return true;
     }
 
-    void update()
+    bool update()
     {
         windowsResized = false;
 
@@ -121,15 +119,17 @@ namespace terminal {
 
         // Ignoring errors
         if (result == -1)
-            return;
+            return true;
 
         // Timeout
         if (result == 0)
-            return;
+            return true;
 
         // Reading stdin if there is data to read
         if (inputPollFD.revents & POLLIN)
             read(inputFD, &keys, sizeof(keys));
+
+        return true;
     }
 
     void cleanup()
@@ -218,7 +218,7 @@ namespace terminal {
         printLiteral("\x1b[H");
     }
 
-    void print(const char *string, size_t bytes)
+    bool print(const char *string, size_t bytes)
     {
         assert(outputFD != -1);
 
@@ -231,16 +231,18 @@ namespace terminal {
                 if (errno == EINTR)
                     continue;
 
-                const char *errorMsg = str::quickFormat(
+                logger::error(
                     "Failed to write to /dev/tty! (errno %d: %s)", 
                     errno, strerror(errno)
                 );
 
-                throw std::runtime_error(errorMsg);
+                return false;
             }
 
             rest  += written;
             bytes -= written;
         }
+
+        return true;
     }
 }
