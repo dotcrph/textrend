@@ -237,7 +237,7 @@ namespace terminal {
         GetNumberOfConsoleInputEvents(inHandle, &events);
 
         if (events == 0)
-            return;
+            return true;
 
         // Read new records
         static INPUT_RECORD records[128];
@@ -446,6 +446,8 @@ namespace terminal {
             rest  += written;
             bytes -= written;
         }
+
+        return true;
     }
 
     const char *getErrorString(DWORD code)
