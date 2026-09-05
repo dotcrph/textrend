@@ -6,6 +6,7 @@
 
 #include <stdexcept>
 #include <windows.h>
+#include <io.h>
 
 #include "args.hpp"
 #include "utils.hpp"
@@ -411,6 +412,11 @@ namespace terminal {
     }
 
 // Misc
+
+    bool isTerminal(FILE *file)
+    {
+        return _isatty(_fileno(file));
+    }
 
     void resetCursor()
     {

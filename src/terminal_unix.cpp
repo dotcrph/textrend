@@ -239,6 +239,11 @@ namespace terminal {
 
 // Misc
 
+    bool isTerminal(FILE *file)
+    {
+        return isatty(fileno(file));
+    }
+
     void resetCursor()
     {
         printLiteral("\x1b[H");

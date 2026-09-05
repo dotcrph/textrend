@@ -19,6 +19,8 @@ namespace terminal {
     char *getPage();
     void freePage(char *page);
 
+    bool isTerminal(FILE *file);
+
     void resetCursor();
 
     bool print(const char *string, size_t bytes);
