@@ -21,14 +21,12 @@
 #include "logger.hpp"
 
 namespace terminal {
-    int inputFD              = -1;
-    int originalInputFDFlags =  0;
-
     pollfd inputPollFD;
-    char keys[16] = {};
+    char keys[128] = {};
 
     int outputFD = -1;
 
+    bool terminalFlagsInitialized = false;
     termios originalTerminalFlags;
 
     bool windowsResized = false;
@@ -55,33 +53,16 @@ namespace terminal {
             return false;
         }
 
-        // Open /dev/tty for input
-
-        // I am not using STDIN_FILENO because it shares the same 
-        // file with STDOUT_FILENO, and since I set O_NONBLOCK 
-        // this results in writes to stdout being non-blocking
-        inputFD = open("/dev/tty", O_RDONLY);
-
-        if (inputFD == -1) {
-            logger::error(
-                "Failed to open '/dev/tty' for input! (errno %d: %s)", 
-                errno, strerror(errno)
-            );
-
-            return false;
-        }
-
         // Disable input buffering and echoing
-        tcgetattr(inputFD, &originalTerminalFlags);
+        tcgetattr(STDIN_FILENO, &originalTerminalFlags);
         termios terminalFlags = originalTerminalFlags;
         terminalFlags.c_lflag &= ~(ECHO | ICANON);
-        tcsetattr(inputFD, TCSAFLUSH, &terminalFlags);
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminalFlags);
 
-        originalInputFDFlags = fcntl(inputFD, F_GETFL, 0);
-        fcntl(inputFD, F_SETFL, originalInputFDFlags | O_NONBLOCK);
+        terminalFlagsInitialized = true;
 
         // Create a pollfd for input 
-        inputPollFD.fd     = inputFD;
+        inputPollFD.fd     = STDIN_FILENO;
         inputPollFD.events = POLLIN;
 
         // Open /dev/tty for output
@@ -120,7 +101,7 @@ namespace terminal {
 
         // Ignoring errors
         if (result == -1)
-            return true;
+            return true; // TODO: This should return false
 
         // Timeout
         if (result == 0)
@@ -128,7 +109,7 @@ namespace terminal {
 
         // Reading stdin if there is data to read
         if (inputPollFD.revents & POLLIN)
-            read(inputFD, &keys, sizeof(keys));
+            read(STDIN_FILENO, &keys, sizeof(keys));
 
         return true;
     }
@@ -136,11 +117,8 @@ namespace terminal {
     void cleanup()
     {
         // Restore attributes and close input fd
-        if (inputFD != -1) {
-            tcsetattr(inputFD, TCSAFLUSH, &originalTerminalFlags);
-            fcntl(inputFD, F_SETFL, originalInputFDFlags);
-            close(inputFD);
-        }
+        if (terminalFlagsInitialized)
+            tcsetattr(STDIN_FILENO, TCSAFLUSH, &originalTerminalFlags);
 
         // Close output fd
         if (outputFD != -1) {
