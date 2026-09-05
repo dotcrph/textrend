@@ -43,7 +43,7 @@ namespace logger {
 
         va_list args;
         va_start(args, fmt);
-        prefixedPrintf(stderr, "[i] ", fmt, args); // FIXME: Should be stdout
+        prefixedPrintf(stdout, "[i] ", fmt, args);
         va_end(args);
     }
 
