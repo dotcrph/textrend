@@ -16,6 +16,9 @@ namespace terminal {
     bool getScreenSize(Vec2s &cells, Vec2s &px);
     bool shouldResizeWindow();
 
+    char *getPage();
+    void freePage(char *page);
+
     void resetCursor();
 
     bool print(const char *string, size_t bytes);

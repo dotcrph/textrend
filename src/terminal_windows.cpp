@@ -5,7 +5,6 @@
 #include <cstring>
 
 #include <stdexcept>
-#include <wincontypes.h>
 #include <windows.h>
 
 #include "args.hpp"
@@ -386,6 +385,29 @@ namespace terminal {
     bool shouldResizeWindow()
     { 
         return windowResized;
+    }
+
+// Memory
+
+    char *getPage()
+    {
+        LPVOID result = VirtualAlloc(
+            NULL, 
+            4096, 
+            MEM_COMMIT | MEM_RESERVE, 
+            PAGE_READWRITE
+        );
+
+        if (result == NULL)
+            return nullptr;
+
+        return (char *)result;
+    }
+
+    void freePage(char *page)
+    {
+        BOOL result = VirtualFree(page, 0, MEM_RELEASE);
+        assert(result);
     }
 
 // Misc

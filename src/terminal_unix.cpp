@@ -11,6 +11,7 @@
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
@@ -209,6 +210,31 @@ namespace terminal {
     void sigwinchHandler(int n)
     {
         windowsResized = true;
+    }
+
+// Memory
+
+    char *getPage()
+    {
+        void *result = mmap(
+            nullptr, 
+            4096, 
+            PROT_READ | PROT_WRITE, 
+            MAP_PRIVATE | MAP_ANONYMOUS, 
+            -1, 
+            0
+        );
+
+        if (result == MAP_FAILED)
+            return nullptr;
+        
+        return (char *)result;
+    }
+
+    void freePage(char *page)
+    {
+        int result = munmap(page, 4096);
+        assert(result == 0);
     }
 
 // Misc
