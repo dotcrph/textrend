@@ -54,6 +54,7 @@ namespace logger {
         va_list args)
     {
         // Printing the string if we're using the main buffer or piping
+        // PERF: isatty calls should be cached
         if (!caching || !isatty(fileno(stream))) {
             fputs(prefix, stream);
             vfprintf(stream, fmt, args);
@@ -62,16 +63,21 @@ namespace logger {
         }
 
         // Allocating memory for the string in the cache
-        size_t length = strlen(prefix) 
-                      + vsnprintf(nullptr, 0, fmt, args) 
-                      + 1; // Newline
+        size_t lengthPrefix = strlen(prefix);
+
+        va_list args2;
+        va_copy(args2, args);
+
+        size_t length = lengthPrefix + vsnprintf(nullptr, 0, fmt, args2) + 1;
+
+        va_end(args2);
 
         if (length > 4096)
             length = 4096;
 
+        char *dest       = nullptr;
         size_t bytesLeft = 4096 - bytes;
 
-        char *dest = nullptr;
         if (bytesLeft < length || pages.empty()) {
             // Allocating a new page
             char *page = new char[4096]();
@@ -85,13 +91,20 @@ namespace logger {
             dest = pages.back() + bytes;
         }
 
-        size_t written = vsnprintf(dest, 4096, fmt, args);
-
-        if (bytes == 4096) {
-            memcpy(dest + 4096 - 4, "...\n", 4);
-        } else {
-            dest[written] = '\n';
+        // Replacing the null terminator from 
+        // the previous string with a newline
+        if (dest - 1 >= pages.back()) {
+            assert(dest[-1] == '\0');
+            dest[-1] = '\n';
         }
+
+        memcpy(dest, prefix, lengthPrefix);
+        vsnprintf(dest + lengthPrefix, 4096, fmt, args);
+
+        if (length == 4096)
+            memcpy(dest + 4096 - 4, "...\0", 4);
+
+        bytes += length;
     }
 
     void enableCaching()
@@ -102,17 +115,12 @@ namespace logger {
     void flushCache()
     {
         for (char *page : pages) {
-            // FIXME: Adding a null terminator at the last moment 
-            // is a hack and should be done in a different way
-            page[4096] = '\0';
-
-            // NOTE: Since this is printed directly to the terminal 
-            // and not piped we can use only a single stream
+            // NOTE: Since this is printed directly to the 
+            // terminal and not piped we can use only stdout
             puts(page);
         }
 
-        for (char *page : pages) {
+        for (char *page : pages)
             delete[] page;
-        }
     }
 }
