@@ -2,10 +2,11 @@
 
 #include <cassert>
 #include <cstdarg>
+#include <cstdio>
 #include <cstring>
-#include <unistd.h>
 
 #include "args.hpp"
+#include "terminal.hpp"
 
 namespace logger {
     // Message cache for when we are using the 
@@ -53,9 +54,21 @@ namespace logger {
         const char *fmt, 
         va_list args)
     {
+        static bool stdoutPipe = !terminal::isTerminal(stdout);
+        static bool stderrPipe = !terminal::isTerminal(stderr);
+
+        bool piped = false;
+
+        if (stream == stdout) {
+            piped = stdoutPipe;
+        } else if (stream == stderr) {
+            piped = stderrPipe;
+        } else {
+            piped = !terminal::isTerminal(stream);
+        }
+
         // Printing the string if we're using the main buffer or piping
-        // PERF: isatty calls should be cached
-        if (!caching || !isatty(fileno(stream))) {
+        if (!caching || piped) {
             fputs(prefix, stream);
             vfprintf(stream, fmt, args);
             putc('\n', stream);
@@ -80,7 +93,8 @@ namespace logger {
 
         if (bytesLeft < length || pages.empty()) {
             // Allocating a new page
-            char *page = new char[4096]();
+            char *page = terminal::getPage();
+            assert(page != nullptr);
 
             pages.push_back(page);
             bytes = 0;
@@ -120,7 +134,7 @@ namespace logger {
             puts(page);
         }
 
-        for (char *page : pages)
-            delete[] page;
+        for (char *page : pages) 
+            terminal::freePage(page);
     }
 }
