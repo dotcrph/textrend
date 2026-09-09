@@ -97,11 +97,18 @@ namespace terminal {
 
         // FIXME: Google says that using poll 
         // with /dev/tty on Mac is unreliable
-        int result = poll(&inputPollFD, 1, 0);
+        int result = poll(&inputPollFD, 1, 0); 
 
         // Ignoring errors
-        if (result == -1)
-            return true; // TODO: This should return false
+        // TODO: Loop on eintr
+        if (result == -1 && errno != EINTR) {
+            logger::error(
+                "Failed to poll stdin! (errno %d: %s)", 
+                errno, strerror(errno)
+            );
+
+            return false;
+        }
 
         // Timeout
         if (result == 0)
