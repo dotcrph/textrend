@@ -273,7 +273,7 @@ namespace terminal {
             // or messages then the event just doesn't get sent
 
             windowResized = true;
-            bufferCells    = record.dwSize;
+            bufferCells   = record.dwSize;
         }
 
         return true;
@@ -365,7 +365,6 @@ namespace terminal {
         CONSOLE_FONT_INFO font;
         BOOL good = GetCurrentConsoleFont(outHandle, FALSE, &font);
 
-        // TODO: Add a flag to disable auto font size detection
         if (good 
          && args::getDetectFontSize()
          && font.dwFontSize.X != 0 // Most of the terminals just send fallback 
